@@ -1,0 +1,16 @@
+[workspace]
+members = [
+  "crates/kernel",
+  "crates/platform",
+  "crates/sysapi",
+  "crates/init",
+  "crates/ui",
+  "crates/services",
+  "tools/sadasctl"
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+authors = ["Sadas OS Contributors"]
+license = "MIT"
