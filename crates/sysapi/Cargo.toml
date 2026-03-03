@@ -1,0 +1,6 @@
+[package]
+name = "sadas-sysapi"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]

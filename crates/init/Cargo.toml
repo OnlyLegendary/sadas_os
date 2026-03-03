@@ -1,0 +1,10 @@
+[package]
+name = "sadas-init"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+sadas-kernel = { path = "../kernel" }
+sadas-services = { path = "../services" }
+sadas-sysapi = { path = "../sysapi" }
+sadas-ui = { path = "../ui" }
