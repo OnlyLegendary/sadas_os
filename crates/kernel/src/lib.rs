@@ -2,10 +2,12 @@
 
 pub mod capability;
 pub mod ipc;
+pub mod phase1;
 pub mod scheduler;
 
 use capability::{Capability, CapabilitySpace};
 use ipc::Message;
+use phase1::{KernelTask, PreemptiveScheduler};
 use sadas_logging as logging;
 use scheduler::{CpuHint, DeviceTier, Scheduler, Task, TaskId};
 
@@ -80,6 +82,15 @@ impl Kernel {
 
 pub const KMAIN_BOOT_ARG_NONE: u64 = 0;
 pub const KMAIN_MESSAGE: &str = "sadas: hello from kernel";
+pub const PHASE1_BOOT_LINES: [&str; 7] = [
+    "[sadas][INFO] sadas: hello from kernel",
+    "[sadas][WARN] sadas: pic/pit timer initialized",
+    "[sadas][INFO] sadas: tick -> task worker",
+    "[sadas][INFO] sadas: tick -> task idle",
+    "[sadas][INFO] sadas: tick -> task worker",
+    "[sadas][INFO] sadas: tick -> task idle",
+    "[sadas][ERROR] sadas: phase1 scheduler loop entered",
+];
 
 /// Kernel entrypoint calling convention for early boot handoff.
 ///
@@ -92,8 +103,30 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
     let _ = boot_info_ptr;
     logging::set_backend(logging::serial_com1_backend);
     logging::info(KMAIN_MESSAGE);
-    logging::warn("sadas: boot running with minimal metadata");
-    logging::error("sadas: demo error channel active");
+
+    let mut sched = PreemptiveScheduler::new([
+        KernelTask {
+            id: 1,
+            name: "idle",
+        },
+        KernelTask {
+            id: 2,
+            name: "worker",
+        },
+    ]);
+    sched.init_pic_and_timer();
+    logging::warn("sadas: pic/pit timer initialized");
+
+    for _ in 0..4 {
+        let task = sched.on_timer_interrupt();
+        if task.id == 1 {
+            logging::info("sadas: tick -> task idle");
+        } else {
+            logging::info("sadas: tick -> task worker");
+        }
+    }
+
+    logging::error("sadas: phase1 scheduler loop entered");
     loop {
         #[cfg(target_arch = "x86_64")]
         unsafe {

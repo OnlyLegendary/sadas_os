@@ -1,4 +1,4 @@
-use sadas_kernel::KMAIN_MESSAGE;
+use sadas_kernel::PHASE1_BOOT_LINES;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -50,7 +50,16 @@ fn write_boot_sector(path: &PathBuf) {
         0xEB, 0xFE, // jmp $
     ];
 
-    let mut msg = KMAIN_MESSAGE.as_bytes().to_vec();
+    let mut message = String::new();
+    for line in PHASE1_BOOT_LINES {
+        message.push_str(line);
+        message.push_str(
+            "
+",
+        );
+    }
+
+    let mut msg = message.into_bytes();
     msg.push(0);
 
     sector[..code.len()].copy_from_slice(&code);

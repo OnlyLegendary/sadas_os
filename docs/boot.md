@@ -58,3 +58,6 @@ Current calling convention/arguments:
 - The minimal boot path passes `0` (no metadata yet).
 - `kmain` is responsible for printing `sadas: hello from kernel`.
 - `kmain` currently emits three log lines through the logging layer: INFO, WARN, and ERROR.
+
+
+For the full Phase 1 acceptance checklist and demo script, see `docs/phase1.md`.
