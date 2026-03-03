@@ -33,7 +33,19 @@ impl Kernel {
         self.caps.grant(task, cap);
     }
 
+    pub fn revoke_capability(&mut self, task: TaskId, cap: Capability) {
+        self.caps.revoke(task, cap);
+    }
+
     pub fn send_message(&self, message: Message) -> Result<(), ipc::IpcError> {
+        if !message.secure_channel
+            && self
+                .caps
+                .has_capability(message.to, Capability::NetworkAccess)
+        {
+            return Err(ipc::IpcError::InsecureChannelRequired);
+        }
+
         if self.caps.has_capability(message.from, Capability::IpcSend)
             && self.caps.has_capability(message.to, Capability::IpcReceive)
         {
@@ -49,5 +61,9 @@ impl Kernel {
 
     pub fn runtime_budget_hz(&self) -> u16 {
         self.scheduler.runtime_budget().target_hz
+    }
+
+    pub fn max_background_tasks(&self) -> u8 {
+        self.scheduler.runtime_budget().max_background_tasks
     }
 }

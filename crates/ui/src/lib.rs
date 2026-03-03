@@ -9,18 +9,36 @@ pub enum Density {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AnimationLevel {
+    Off,
+    Reduced,
+    Full,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UiProfile {
     pub theme: ThemeMode,
     pub density: Density,
-    pub animations_enabled: bool,
+    pub animation: AnimationLevel,
+    pub blur_enabled: bool,
 }
 
 impl UiProfile {
     pub const fn for_legacy_device() -> Self {
         Self {
-            theme: ThemeMode::Dark,
+            theme: ThemeMode::HighContrast,
             density: Density::Compact,
-            animations_enabled: false,
+            animation: AnimationLevel::Off,
+            blur_enabled: false,
+        }
+    }
+
+    pub const fn for_balanced_device() -> Self {
+        Self {
+            theme: ThemeMode::Dark,
+            density: Density::Comfortable,
+            animation: AnimationLevel::Reduced,
+            blur_enabled: false,
         }
     }
 
@@ -28,7 +46,8 @@ impl UiProfile {
         Self {
             theme: ThemeMode::Dark,
             density: Density::Comfortable,
-            animations_enabled: true,
+            animation: AnimationLevel::Full,
+            blur_enabled: true,
         }
     }
 }
@@ -45,5 +64,16 @@ impl Surface {
             return 16;
         }
         1000 / refresh_hz
+    }
+
+    pub fn recommended_render_scale(&self) -> u8 {
+        let pixels = self.width as u32 * self.height as u32;
+        if pixels <= 1280 * 720 {
+            100
+        } else if pixels <= 1920 * 1080 {
+            85
+        } else {
+            70
+        }
     }
 }

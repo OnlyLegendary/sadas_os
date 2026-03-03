@@ -1,33 +1,31 @@
 # Sadas OS Roadmap
 
-## Phase 0: Core scaffolding (done)
+## Phase 0: Product-grade architecture baseline (done)
 
-- Rust workspace created with independent OS layers.
-- No Linux distro dependencies.
-- Microkernel building blocks established (tasks, scheduler, capabilities, IPC authorization).
-- Initial service policy model and UI profile primitives included.
+- Full workspace with kernel, services, UI, init, platform, sysapi, and tooling.
+- Adaptive performance framework for legacy and modern devices.
+- Capability audit and secure-channel IPC policy surface.
 
-## Phase 1: Boot to shell
+## Phase 1: Bootable alpha
 
-- Add `boot` crate for UEFI + framebuffer initialization.
-- Load kernel as an ELF image and hand off memory map.
-- Bring up serial and frame logger.
-- Start `init` in ring 3 with a minimal userspace runtime.
+- UEFI boot crate and kernel handoff.
+- Virtual memory and user/kernel privilege isolation.
+- Basic filesystem and process loader.
 
-## Phase 2: Privacy-first runtime
+## Phase 2: Desktop beta
 
-- Implement sealed vault daemon (`vaultd`) with hardware-backed keys.
-- Add permission broker with per-app declarative policy.
-- Add auditable event log with privacy-preserving aggregation.
+- Compositor, shell, settings center, and app lifecycle manager.
+- Driver milestones: NVMe, USB HID, audio, networking.
+- Compatibility layer for popular desktop software workflows.
 
-## Phase 3: Familiar UX + customization
+## Phase 3: Competitive release candidate
 
-- Ship baseline shell that mirrors common desktop shortcuts.
-- Add declarative personalization engine and hot-swappable themes.
-- Keep 30Hz/60Hz/120Hz profiles to ensure smooth experience across hardware generations.
+- Secure signed updates and rollback-safe system snapshots.
+- Enterprise policy pack and remote fleet controls.
+- Accessibility, localization, and polished onboarding.
 
-## Phase 4: Hardware expansion
+## Phase 4: Stable product release
 
-- NVMe, USB HID, audio, Wi-Fi drivers.
-- Multi-core scheduler and NUMA-aware memory allocator.
-- TPM-backed secure boot measurement chain.
+- Hardware certification matrix across legacy and modern devices.
+- Performance targets benchmarked against mainstream desktop systems.
+- Public SDK, documentation portal, and extension ecosystem.

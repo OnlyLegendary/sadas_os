@@ -30,18 +30,18 @@ impl DeviceTier {
             },
             DeviceTier::Balanced => RuntimeBudget {
                 target_hz: 60,
-                max_background_tasks: 4,
+                max_background_tasks: 6,
             },
             DeviceTier::Modern => RuntimeBudget {
                 target_hz: 120,
-                max_background_tasks: 8,
+                max_background_tasks: 12,
             },
         }
     }
 }
 
 pub struct Scheduler {
-    run_queue: [Option<Task>; 64],
+    run_queue: [Option<Task>; 128],
     head: usize,
     tail: usize,
     tier: DeviceTier,
@@ -50,7 +50,7 @@ pub struct Scheduler {
 impl Scheduler {
     pub fn new() -> Self {
         Self {
-            run_queue: [None; 64],
+            run_queue: [None; 128],
             head: 0,
             tail: 0,
             tier: DeviceTier::Balanced,
@@ -78,9 +78,46 @@ impl Scheduler {
             return None;
         }
 
-        let task = self.run_queue[self.head];
+        let mut best_index = self.head;
+        let mut cursor = self.head;
+
+        while cursor != self.tail {
+            if let (Some(candidate), Some(best)) =
+                (self.run_queue[cursor], self.run_queue[best_index])
+            {
+                if candidate.priority > best.priority {
+                    best_index = cursor;
+                }
+            }
+            cursor = (cursor + 1) % self.run_queue.len();
+        }
+
+        let selected = self.run_queue[best_index];
+        self.run_queue[best_index] = self.run_queue[self.head];
         self.run_queue[self.head] = None;
         self.head = (self.head + 1) % self.run_queue.len();
-        task
+        selected
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn higher_priority_runs_first() {
+        let mut sched = Scheduler::new();
+        sched.enqueue(Task {
+            id: TaskId(1),
+            name: "low",
+            priority: 10,
+        });
+        sched.enqueue(Task {
+            id: TaskId(2),
+            name: "high",
+            priority: 250,
+        });
+        let task = sched.next().expect("task available");
+        assert_eq!(task.name, "high");
     }
 }

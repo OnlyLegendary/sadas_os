@@ -24,10 +24,12 @@ impl EntropyPool {
             let next = current
                 .wrapping_mul(6364136223846793005)
                 .wrapping_add(1442695040888963407);
-            match self
-                .state
-                .compare_exchange_weak(current, next, Ordering::Relaxed, Ordering::Relaxed)
-            {
+            match self.state.compare_exchange_weak(
+                current,
+                next,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            ) {
                 Ok(_) => return next,
                 Err(observed) => current = observed,
             }

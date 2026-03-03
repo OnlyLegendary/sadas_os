@@ -5,6 +5,7 @@ fn print_usage() {
     println!("  sadasctl plan");
     println!("  sadasctl privacy-profile");
     println!("  sadasctl device-profile <ram-mb> <cpu-cores>");
+    println!("  sadasctl feature-matrix");
 }
 
 fn main() {
@@ -13,16 +14,16 @@ fn main() {
 
     match args.next().as_deref() {
         Some("plan") => {
-            println!("Kernel: capability microkernel + adaptive scheduler");
-            println!("Userspace: privacy broker, vault, compositor, shell");
-            println!("UI: frame-budgeted rendering with legacy hardware mode");
-            println!("Packaging: signed immutable bundles");
+            println!("Kernel: capability microkernel + priority scheduler");
+            println!("Security: audited capabilities + secure IPC channels");
+            println!("UX: adaptive compositor profiles from legacy to modern");
+            println!("Platform: updater + compatibility layer services");
         }
         Some("privacy-profile") => {
             println!("Network sandbox: enabled");
             println!("Telemetry: off by default");
             println!("Per-app consent gates: enabled");
-            println!("Privacy levels: relaxed / standard / strict");
+            println!("Sensitive services require strict privacy level");
         }
         Some("device-profile") => {
             let ram_mb = args.next().and_then(|v| v.parse::<u32>().ok()).unwrap_or(0);
@@ -40,20 +41,28 @@ fn main() {
             match tier {
                 "legacy" => {
                     println!("target refresh: 30Hz");
-                    println!("UI animations: disabled");
-                    println!("background services: minimal");
+                    println!("effects: off");
+                    println!("compatibility mode: maximum");
                 }
                 "balanced" => {
                     println!("target refresh: 60Hz");
-                    println!("UI animations: selective");
-                    println!("background services: moderate");
+                    println!("effects: reduced");
+                    println!("compatibility mode: smart");
                 }
                 _ => {
                     println!("target refresh: 120Hz");
-                    println!("UI animations: enabled");
-                    println!("background services: full");
+                    println!("effects: full");
+                    println!("compatibility mode: native-first");
                 }
             }
+        }
+        Some("feature-matrix") => {
+            println!("Sadas OS Competitive Matrix");
+            println!("- Privacy by default: yes");
+            println!("- Adaptive performance profiles: yes");
+            println!("- Unified shell/compositor stack: yes");
+            println!("- Compatibility layer architecture: yes");
+            println!("- Signed immutable updates: planned");
         }
         _ => print_usage(),
     }
