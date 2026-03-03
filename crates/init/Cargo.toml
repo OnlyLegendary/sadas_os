@@ -1,0 +1,13 @@
+[package]
+name = "sadas-init"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+sadas-boot = { path = "../boot" }
+sadas-drivers = { path = "../drivers" }
+sadas-installer = { path = "../installer" }
+sadas-kernel = { path = "../kernel" }
+sadas-services = { path = "../services" }
+sadas-ui = { path = "../ui" }
+sadas-vm = { path = "../vm" }
