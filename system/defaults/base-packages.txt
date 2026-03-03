@@ -1,0 +1,8 @@
+# Minimal Phase 1 product baseline
+kde-plasma-desktop
+systemsettings
+dolphin
+networkmanager
+flatpak
+plasma-discover
+sadas-store-placeholder

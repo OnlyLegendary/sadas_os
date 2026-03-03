@@ -1,0 +1,28 @@
+/target
+
+# Build/output directories
+out/
+build/
+dist/
+
+# VM and OS image artifacts
+*.iso
+*.img
+*.qcow2
+*.vmdk
+*.vdi
+*.raw
+
+# Common binary assets/artifacts
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.ico
+*.pyc
+__pycache__/
+
+# Keep placeholder files for empty dirs
+!system/image/.gitkeep
