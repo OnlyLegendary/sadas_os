@@ -1,0 +1,9 @@
+[package]
+name = "sadas-kernel"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+sadas-platform = { path = "../platform" }
+sadas-sysapi = { path = "../sysapi" }
+sadas-logging = { path = "../logging" }
