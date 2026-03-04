@@ -1,4 +1,4 @@
-use core::sync::atomic::{AtomicU64, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct KernelTask {
@@ -11,6 +11,7 @@ pub struct PreemptiveScheduler {
     tasks: [KernelTask; 2],
     current: usize,
     tick_count: AtomicU64,
+    initialized: AtomicBool,
 }
 
 impl PreemptiveScheduler {
@@ -19,18 +20,23 @@ impl PreemptiveScheduler {
             tasks,
             current: 0,
             tick_count: AtomicU64::new(0),
+            initialized: AtomicBool::new(false),
         }
     }
 
     pub fn init_pic_and_timer(&self) {
         // Phase 1 skeleton for PIC/PIT setup point.
         // Real hardware init is intentionally centralized here.
+        self.initialized.store(true, Ordering::SeqCst);
     }
 
-    pub fn on_timer_interrupt(&mut self) -> KernelTask {
+    pub fn on_timer_interrupt(&mut self) -> Option<KernelTask> {
+        if !self.initialized.load(Ordering::SeqCst) {
+            return None;
+        }
         self.tick_count.fetch_add(1, Ordering::Relaxed);
         self.current = (self.current + 1) % self.tasks.len();
-        self.tasks[self.current]
+        Some(self.tasks[self.current])
     }
 
     pub fn tick_count(&self) -> u64 {
@@ -39,6 +45,14 @@ impl PreemptiveScheduler {
 
     pub fn current_task(&self) -> KernelTask {
         self.tasks[self.current]
+    }
+
+    pub fn run_queue_len(&self) -> usize {
+        self.tasks.len()
+    }
+
+    pub fn is_initialized(&self) -> bool {
+        self.initialized.load(Ordering::SeqCst)
     }
 }
 
@@ -62,11 +76,15 @@ mod tests {
         assert_eq!(sched.tick_count(), 0);
         assert_eq!(sched.current_task().name, "idle");
 
-        let first = sched.on_timer_interrupt();
+        assert!(sched.on_timer_interrupt().is_none());
+
+        sched.init_pic_and_timer();
+
+        let first = sched.on_timer_interrupt().expect("scheduler initialized");
         assert_eq!(first.name, "worker");
         assert_eq!(sched.tick_count(), 1);
 
-        let second = sched.on_timer_interrupt();
+        let second = sched.on_timer_interrupt().expect("scheduler initialized");
         assert_eq!(second.name, "idle");
         assert_eq!(sched.tick_count(), 2);
     }

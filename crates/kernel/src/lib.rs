@@ -89,7 +89,7 @@ pub const PHASE1_BOOT_LINES: [&str; 7] = [
     "[sadas][INFO] sadas: tick -> task idle",
     "[sadas][INFO] sadas: tick -> task worker",
     "[sadas][INFO] sadas: tick -> task idle",
-    "[sadas][ERROR] sadas: phase1 scheduler loop entered",
+    "[sadas][INFO] sadas: phase1 scheduler loop entered",
 ];
 
 /// Kernel entrypoint calling convention for early boot handoff.
@@ -118,23 +118,104 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
     logging::warn("sadas: pic/pit timer initialized");
 
     for _ in 0..4 {
-        let task = sched.on_timer_interrupt();
-        if task.id == 1 {
-            logging::info("sadas: tick -> task idle");
-        } else {
-            logging::info("sadas: tick -> task worker");
+        if let Some(task) = sched.on_timer_interrupt() {
+            if task.id == 1 {
+                logging::info("sadas: tick -> task idle");
+            } else {
+                logging::info("sadas: tick -> task worker");
+            }
         }
     }
 
-    logging::error("sadas: phase1 scheduler loop entered");
+    enable_interrupts();
+    logging::info("sadas: phase1 scheduler loop entered");
+    log_scheduler_diagnostics(&sched);
+
     loop {
-        #[cfg(target_arch = "x86_64")]
-        unsafe {
-            core::arch::asm!("hlt", options(nomem, nostack, preserves_flags));
-        }
-        #[cfg(target_arch = "x86")]
-        unsafe {
-            core::arch::asm!("hlt", options(nomem, nostack, preserves_flags));
+        halt_cpu();
+
+        if let Some(task) = sched.on_timer_interrupt() {
+            let ticks = sched.tick_count();
+            if ticks % 100 == 0 {
+                logging::info("sadas: scheduler heartbeat");
+                logging::debug(task.name);
+                log_scheduler_diagnostics(&sched);
+            }
         }
     }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn enable_interrupts() {
+    unsafe {
+        core::arch::asm!("sti", options(nomem, nostack, preserves_flags));
+    }
+}
+
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+fn enable_interrupts() {}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn halt_cpu() {
+    unsafe {
+        core::arch::asm!("hlt", options(nomem, nostack, preserves_flags));
+    }
+}
+
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+fn halt_cpu() {}
+
+fn log_scheduler_diagnostics(sched: &PreemptiveScheduler) {
+    debug_u64(
+        "sadas: diag current_task_id",
+        sched.current_task().id as u64,
+    );
+    logging::debug(sched.current_task().name);
+    debug_u64("sadas: diag run_queue_len", sched.run_queue_len() as u64);
+    if interrupts_enabled() {
+        logging::debug("sadas: diag interrupts_enabled=true");
+    } else {
+        logging::debug("sadas: diag interrupts_enabled=false");
+    }
+    debug_u64("sadas: diag tick_count", sched.tick_count());
+    if !sched.is_initialized() {
+        logging::warn("sadas: scheduler not initialized");
+    }
+}
+
+fn debug_u64(label: &str, value: u64) {
+    logging::debug(label);
+
+    let mut digits = [0u8; 20];
+    let mut n = value;
+    let mut i = digits.len();
+
+    if n == 0 {
+        i -= 1;
+        digits[i] = b'0';
+    } else {
+        while n > 0 {
+            i -= 1;
+            digits[i] = b'0' + (n % 10) as u8;
+            n /= 10;
+        }
+    }
+
+    if let Ok(text) = core::str::from_utf8(&digits[i..]) {
+        logging::debug(text);
+    }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn interrupts_enabled() -> bool {
+    let rflags: usize;
+    unsafe {
+        core::arch::asm!("pushfq", "pop {}", out(reg) rflags, options(nomem, preserves_flags));
+    }
+    (rflags & (1 << 9)) != 0
+}
+
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+fn interrupts_enabled() -> bool {
+    false
 }

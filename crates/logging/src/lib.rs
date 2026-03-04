@@ -4,6 +4,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LogLevel {
+    Debug,
     Info,
     Warn,
     Error,
@@ -12,6 +13,7 @@ pub enum LogLevel {
 impl LogLevel {
     pub const fn as_str(self) -> &'static str {
         match self {
+            LogLevel::Debug => "DEBUG",
             LogLevel::Info => "INFO",
             LogLevel::Warn => "WARN",
             LogLevel::Error => "ERROR",
@@ -42,6 +44,10 @@ pub fn log(level: LogLevel, msg: &str) {
 
 pub fn info(msg: &str) {
     log(LogLevel::Info, msg);
+}
+
+pub fn debug(msg: &str) {
+    log(LogLevel::Debug, msg);
 }
 
 pub fn warn(msg: &str) {
@@ -101,6 +107,7 @@ mod tests {
 
     #[test]
     fn level_labels_are_stable() {
+        assert_eq!(LogLevel::Debug.as_str(), "DEBUG");
         assert_eq!(LogLevel::Info.as_str(), "INFO");
         assert_eq!(LogLevel::Warn.as_str(), "WARN");
         assert_eq!(LogLevel::Error.as_str(), "ERROR");
