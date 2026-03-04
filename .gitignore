@@ -5,7 +5,7 @@ out/
 build/
 dist/
 
-# VM and OS image artifacts
+# OS / VM artifacts
 *.iso
 *.img
 *.qcow2
@@ -13,7 +13,7 @@ dist/
 *.vdi
 *.raw
 
-# Common binary assets/artifacts
+# binary assets
 *.png
 *.jpg
 *.jpeg
@@ -24,5 +24,5 @@ dist/
 *.pyc
 __pycache__/
 
-# Keep placeholder files for empty dirs
+# keep placeholder
 !system/image/.gitkeep
