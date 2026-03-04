@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Sadas Store
+Comment=Install trusted apps from the curated catalog
+Exec=xdg-open https://flathub.org/apps/collection/popular
+Icon=system-software-install
+Terminal=false
+Categories=System;Settings;

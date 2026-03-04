@@ -19,6 +19,9 @@ fn main() {
     let installer = InstallProfile::secure_desktop();
     println!("boot chain: {:?}", BootPlan::stage_order());
     println!("boot policy: {:?}", boot);
+    for entry in BootPlan::qemu_boot_stub_report() {
+        println!("boot stub: {:?} => {}", entry.stage, entry.message);
+    }
     println!(
         "vm profile: {:?}, layout: {:?}",
         vm,

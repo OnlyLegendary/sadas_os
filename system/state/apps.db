@@ -1,0 +1,4 @@
+# app_id install_source
+org.kde.systemsettings base
+org.kde.dolphin base
+org.kde.konsole optional

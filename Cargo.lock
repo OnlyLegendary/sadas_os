@@ -7,6 +7,10 @@ name = "sadas-boot"
 version = "0.1.0"
 
 [[package]]
+name = "sadas-core"
+version = "0.1.0"
+
+[[package]]
 name = "sadas-drivers"
 version = "0.1.0"
 
@@ -31,8 +35,20 @@ version = "0.1.0"
 name = "sadas-kernel"
 version = "0.1.0"
 dependencies = [
+ "sadas-logging",
  "sadas-platform",
  "sadas-sysapi",
+]
+
+[[package]]
+name = "sadas-logging"
+version = "0.1.0"
+
+[[package]]
+name = "sadas-permission-broker"
+version = "0.1.0"
+dependencies = [
+ "sadas-core",
 ]
 
 [[package]]
@@ -40,10 +56,38 @@ name = "sadas-platform"
 version = "0.1.0"
 
 [[package]]
+name = "sadas-privacy-firewall"
+version = "0.1.0"
+dependencies = [
+ "sadas-core",
+]
+
+[[package]]
+name = "sadas-qemu-runner"
+version = "0.1.0"
+dependencies = [
+ "sadas-kernel",
+]
+
+[[package]]
 name = "sadas-services"
 version = "0.1.0"
 dependencies = [
  "sadas-sysapi",
+]
+
+[[package]]
+name = "sadas-settings"
+version = "0.1.0"
+dependencies = [
+ "sadas-core",
+]
+
+[[package]]
+name = "sadas-store"
+version = "0.1.0"
+dependencies = [
+ "sadas-core",
 ]
 
 [[package]]

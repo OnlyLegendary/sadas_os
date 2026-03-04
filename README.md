@@ -1,42 +1,38 @@
 # Sadas OS
 
-Sadas OS is a from-scratch Rust operating system project designed to become a complete, polished desktop platform while staying privacy-first.
+Sadas OS is a privacy-first, no-bloat, Windows-friendly product OS effort.
 
-## Product goals
+Phase 1 uses a pragmatic base for a real desktop demo:
+- Linux kernel
+- Wayland + KDE Plasma
+- Flatpak app tooling
+- QEMU x86_64 UEFI as primary demo target
 
-- **Privacy by default** with capability controls, strict policy levels, and secure IPC channels.
-- **Familiarity** through a complete shell/compositor/service stack and predictable workflows.
-- **Customization** with sleek UI themes, frosted glass mode, and obsidian glass mode.
-- **Runs well on old and new hardware** using runtime tiers, latency-aware scheduling, and frame-budget-aware UX profiles.
+## Repo layout
 
-## Current operational stack
+- `system/` image artifacts, defaults, branding, persistent state
+- `scripts/` build/run entrypoints
+- `docs/` quickstart + privacy + roadmap docs
+- `apps/` Rust UI apps (`sadas-store`, `sadas-settings`)
+- `services/` Rust services (`permission-broker`, `privacy-firewall`, `sadas-core`)
+- `crates/` kernel/platform/sysapi and lower-level Rust components
+- `tools/` developer tools
 
-- `crates/boot`: hardened boot chain model (secure/measured boot and fallback slot).
-- `crates/vm`: VM profile and canonical user/kernel address layout definitions.
-- `crates/drivers`: broad driver matrix (storage, network, input, media, graphics, sensors, power, printer).
-- `crates/installer`: secure installer profile and stage pipeline.
-- `crates/kernel`: microkernel core, priority scheduler, latency hints, capability audit log, secure IPC checks.
-- `crates/platform`: low-level primitives such as entropy.
-- `crates/sysapi`: syscall ABI and shared product enums for privacy/theme/window control.
-- `crates/services`: policy model for vault, broker, compositor, shell, updater, compatibility layer.
-- `crates/ui`: UI profile tuning, frosted/obsidian glass palettes, and desktop layout helpers.
-- `crates/init`: startup orchestration for boot, VM, installer, runtime budgets, UI, services, and driver matrix.
-- `tools/sadasctl`: planning tool with boot/VM/driver/installer inspection commands.
+## Phase 1 quickstart
 
-## Quick checks
+```bash
+./scripts/build.sh
+./scripts/run-qemu.sh
+```
+
+Detailed instructions:
+- `docs/quickstart.md`
+- `docs/privacy.md`
+
+## Required checks
 
 ```bash
 cargo fmt --all
 cargo check --workspace
 cargo test --workspace
-cargo run -p sadas-init
-cargo run -p sadasctl -- feature-matrix
-cargo run -p sadasctl -- demo-shell
 ```
-
-## What is still needed for a true shipping OS
-
-1. Real bootloader executable and firmware integration.
-2. Working page tables, process isolation, and memory reclaim.
-3. Real hardware drivers and userspace daemon interfaces.
-4. GUI installer frontend, recovery image, and signed OTA pipeline.

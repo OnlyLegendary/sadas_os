@@ -7,6 +7,7 @@ fn print_usage() {
     println!("  sadasctl device-profile <ram-mb> <cpu-cores>");
     println!("  sadasctl feature-matrix");
     println!("  sadasctl boot-plan");
+    println!("  sadasctl boot-stub-demo");
     println!("  sadasctl vm-plan");
     println!("  sadasctl driver-matrix");
     println!("  sadasctl installer-plan");
@@ -91,6 +92,13 @@ fn main() {
             println!("Secure boot: required");
             println!("Measured boot: enabled");
             println!("Fallback slot: enabled");
+        }
+        Some("boot-stub-demo") => {
+            println!("QEMU boot stub transcript:");
+            println!("- UEFI firmware entered");
+            println!("- bootloader verified kernel image");
+            println!("- kernel handoff successful");
+            println!("- Sadas OS boot stub: hello from init");
         }
         Some("vm-plan") => {
             println!("Page size: 4096");

@@ -2,6 +2,7 @@
 members = [
   "crates/kernel",
   "crates/platform",
+  "crates/logging",
   "crates/sysapi",
   "crates/boot",
   "crates/vm",
@@ -10,7 +11,13 @@ members = [
   "crates/init",
   "crates/ui",
   "crates/services",
-  "tools/sadasctl"
+  "services/sadas-core",
+  "services/permission-broker",
+  "services/privacy-firewall",
+  "apps/sadas-store",
+  "apps/sadas-settings",
+  "tools/sadasctl",
+  "tools/qemu-runner"
 ]
 resolver = "2"
 
@@ -18,3 +25,9 @@ resolver = "2"
 edition = "2021"
 authors = ["Sadas OS Contributors"]
 license = "MIT"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
