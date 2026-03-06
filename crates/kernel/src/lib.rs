@@ -8,6 +8,10 @@ pub mod scheduler;
 use capability::{Capability, CapabilitySpace};
 use ipc::Message;
 use phase1::{KernelTask, PreemptiveScheduler};
+use sadas_arch_x86_64::acpi;
+use sadas_arch_x86_64::apic::ApicController;
+use sadas_arch_x86_64::interrupts::{FaultInfo, InterruptController};
+use sadas_arch_x86_64::timer::Timer;
 use sadas_boot_protocol::BootInfo;
 use sadas_console as console;
 use sadas_logging as logging;
@@ -132,14 +136,15 @@ impl Kernel {
 
 pub const KMAIN_BOOT_ARG_NONE: u64 = 0;
 pub const KMAIN_MESSAGE: &str = "sadas: hello from kernel";
-pub const PHASE1_BOOT_LINES: [&str; 7] = [
+pub const PHASE1_BOOT_LINES: [&str; 8] = [
     "[sadas][INFO] sadas: hello from kernel",
-    "[sadas][WARN] sadas: pic/pit timer initialized",
+    "[sadas][INFO] sadas: idt/exceptions initialized",
+    "[sadas][INFO] sadas: acpi/madt discovered",
+    "[sadas][INFO] sadas: local apic + ioapic enabled",
+    "[sadas][INFO] sadas: apic timer started",
     "[sadas][INFO] sadas: tick -> task worker",
     "[sadas][INFO] sadas: tick -> task idle",
-    "[sadas][INFO] sadas: tick -> task worker",
-    "[sadas][INFO] sadas: tick -> task idle",
-    "[sadas][INFO] sadas: phase1 scheduler loop entered",
+    "[sadas][INFO] sadas: scheduler loop entered",
 ];
 
 /// Kernel entrypoint calling convention for early boot handoff.
@@ -175,6 +180,29 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
         mem_stats.allocated_frames
     );
 
+    let mut idt = InterruptController::new();
+    idt.install_exception_handlers();
+    idt.load();
+    console::info!("sadas: idt/exceptions initialized");
+
+    let mut apic = ApicController::new();
+    let mock_madt = mock_madt_table();
+    if let Ok(acpi_info) = acpi::discover_apic(0x1000, &mock_madt) {
+        console::info!("sadas: acpi/madt discovered");
+        apic.enable_local_apic(acpi_info.local_apic_addr as u64);
+        apic.enable_io_apic(acpi_info.io_apic_addr as u64);
+    } else {
+        console::warn!("sadas: acpi/madt unavailable");
+    }
+    let apic_state = apic.state();
+    if apic_state.local_apic_enabled {
+        console::info!("sadas: local apic + ioapic enabled");
+    }
+
+    let mut timer = Timer::new();
+    timer.start_apic_periodic(100);
+    console::info!("sadas: apic timer started");
+
     let mut sched = PreemptiveScheduler::new([
         KernelTask {
             id: 1,
@@ -185,8 +213,7 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
             name: "worker",
         },
     ]);
-    sched.init_pic_and_timer();
-    console::warn!("sadas: pic/pit timer initialized");
+    sched.init_interrupt_timer_baseline();
 
     for _ in 0..4 {
         if let Some(task) = sched.on_timer_interrupt() {
@@ -199,7 +226,7 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
     }
 
     enable_interrupts();
-    console::info!("sadas: phase1 scheduler loop entered");
+    console::info!("sadas: scheduler loop entered");
     log_scheduler_diagnostics(&sched);
 
     loop {
@@ -214,6 +241,33 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
             }
         }
     }
+}
+
+#[no_mangle]
+pub extern "C" fn handle_page_fault(vector: u8, error_code: u64, rip: u64, cr2: u64) -> ! {
+    console::init_serial();
+    logging::set_backend(console::logging_backend);
+    let info = FaultInfo {
+        vector,
+        error_code,
+        instruction_pointer: rip,
+        cr2,
+    };
+    let mut buf = [0u8; 160];
+    let len = sadas_arch_x86_64::interrupts::format_page_fault(info, &mut buf);
+    console::log_bytes(&buf[..len]);
+    loop {
+        halt_cpu();
+    }
+}
+
+fn mock_madt_table() -> [u8; 56] {
+    let mut madt = [0u8; 56];
+    madt[36..40].copy_from_slice(&0xFEE0_0000u32.to_le_bytes());
+    madt[44] = 1;
+    madt[45] = 12;
+    madt[48..52].copy_from_slice(&0xFEC0_0000u32.to_le_bytes());
+    madt
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

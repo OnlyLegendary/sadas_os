@@ -3,6 +3,10 @@
 version = 4
 
 [[package]]
+name = "sadas-arch-x86_64"
+version = "0.1.0"
+
+[[package]]
 name = "sadas-boot"
 version = "0.1.0"
 
@@ -53,6 +57,7 @@ version = "0.1.0"
 name = "sadas-kernel"
 version = "0.1.0"
 dependencies = [
+ "sadas-arch-x86_64",
  "sadas-boot-protocol",
  "sadas-console",
  "sadas-logging",

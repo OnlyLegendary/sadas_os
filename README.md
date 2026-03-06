@@ -10,6 +10,7 @@ Sadas OS is a standalone Rust OS effort focused on privacy-first defaults and a 
 - QEMU runner with both legacy and UEFI modes.
 - Unified console layer (`sadas-console`) with serial COM1 and framebuffer text rendering.
 - Hardened memory scaffolding (`sadas-memory`) for frame allocation, heap init, and page mapping APIs.
+- x86_64 arch baseline crate (`sadas-arch-x86_64`) for IDT/exceptions, MADT parsing, APIC, and timer setup.
 
 ## Console layer
 

@@ -24,10 +24,14 @@ impl PreemptiveScheduler {
         }
     }
 
-    pub fn init_pic_and_timer(&self) {
-        // Phase 1 skeleton for PIC/PIT setup point.
-        // Real hardware init is intentionally centralized here.
+    pub fn init_interrupt_timer_baseline(&self) {
+        // Phase 1 baseline scheduler gate: interrupts/timer ready.
         self.initialized.store(true, Ordering::SeqCst);
+    }
+
+    pub fn init_pic_and_timer(&self) {
+        // Compatibility shim for older call sites.
+        self.init_interrupt_timer_baseline();
     }
 
     pub fn on_timer_interrupt(&mut self) -> Option<KernelTask> {
@@ -78,7 +82,7 @@ mod tests {
 
         assert!(sched.on_timer_interrupt().is_none());
 
-        sched.init_pic_and_timer();
+        sched.init_interrupt_timer_baseline();
 
         let first = sched.on_timer_interrupt().expect("scheduler initialized");
         assert_eq!(first.name, "worker");

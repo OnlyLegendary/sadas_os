@@ -4,6 +4,7 @@ members = [
   "crates/platform",
   "crates/logging",
   "crates/console",
+  "crates/arch-x86_64",
   "crates/memory",
   "crates/sysapi",
   "crates/boot",

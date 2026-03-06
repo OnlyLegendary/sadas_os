@@ -46,3 +46,9 @@ Memory hardening scaffolding is now present in `crates/memory`:
 - frame allocator seeded by descriptor map + reserved ranges
 - heap initialization API for kernel allocator setup
 - paging API with alignment and duplicate-map invariants
+
+Modern x86_64 interrupt baseline scaffolding is now present in `crates/arch-x86_64`:
+- IDT + exception setup model
+- page-fault formatter/handler integration
+- MADT parser enough for LAPIC/IOAPIC addresses
+- APIC timer bootstrap state
