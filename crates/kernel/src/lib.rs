@@ -11,7 +11,55 @@ use phase1::{KernelTask, PreemptiveScheduler};
 use sadas_boot_protocol::BootInfo;
 use sadas_console as console;
 use sadas_logging as logging;
+use sadas_memory::frame::{
+    FrameAllocator, FrameStats, MemoryDescriptor, MemoryType, ReservedRange,
+};
+use sadas_memory::heap;
+use sadas_memory::paging::{MapFlags, PageMapper};
 use scheduler::{CpuHint, DeviceTier, Scheduler, Task, TaskId};
+
+pub struct MemoryManager {
+    frame_allocator: FrameAllocator,
+    mapper: PageMapper,
+    last_stats: FrameStats,
+}
+
+impl MemoryManager {
+    pub const fn new() -> Self {
+        Self {
+            frame_allocator: FrameAllocator::empty(),
+            mapper: PageMapper::new(),
+            last_stats: FrameStats {
+                tracked_frames: 0,
+                usable_frames: 0,
+                allocated_frames: 0,
+                free_frames: 0,
+            },
+        }
+    }
+
+    pub fn initialize(
+        &mut self,
+        memory_map: &[MemoryDescriptor],
+        reserved: &[ReservedRange],
+        heap_start: usize,
+        heap_size: usize,
+    ) {
+        self.frame_allocator.initialize(memory_map, reserved);
+        self.last_stats = self.frame_allocator.stats();
+        heap::init_global_heap(heap_start, heap_size);
+    }
+
+    pub fn identity_map_region(&mut self, start: u64, len: u64) -> bool {
+        self.mapper
+            .map_identity_region(start, len, MapFlags::KERNEL_RW)
+            .is_ok()
+    }
+
+    pub fn stats(&self) -> FrameStats {
+        self.last_stats
+    }
+}
 
 pub struct Kernel {
     scheduler: Scheduler,
@@ -106,6 +154,26 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
     console::init_serial();
     logging::set_backend(console::logging_backend);
     console::info!("{}", KMAIN_MESSAGE);
+
+    let mut memory = MemoryManager::new();
+    let bootstrap_map = [MemoryDescriptor {
+        ty: MemoryType::Conventional,
+        physical_start: 0x0010_0000,
+        page_count: 256,
+    }];
+    let reserved = [ReservedRange {
+        start: 0x0010_0000,
+        len: 0x20_000,
+    }];
+    memory.initialize(&bootstrap_map, &reserved, 0x0020_0000, 0x10_0000);
+    let _ = memory.identity_map_region(0x0010_0000, 0x20_000);
+    let mem_stats = memory.stats();
+    console::debug!(
+        "memory: tracked={} free={} allocated={}",
+        mem_stats.tracked_frames,
+        mem_stats.free_frames,
+        mem_stats.allocated_frames
+    );
 
     let mut sched = PreemptiveScheduler::new([
         KernelTask {

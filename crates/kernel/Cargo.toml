@@ -9,3 +9,4 @@ sadas-sysapi = { path = "../sysapi" }
 sadas-logging = { path = "../logging" }
 sadas-boot-protocol = { path = "../boot-protocol" }
 sadas-console = { path = "../console" }
+sadas-memory = { path = "../memory" }

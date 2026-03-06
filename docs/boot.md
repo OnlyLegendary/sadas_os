@@ -41,3 +41,8 @@ The runner uses:
 
 This prompt adds the UEFI crate, ESP layout, and QEMU UEFI wiring.
 Kernel ELF loading, memory map handoff, GOP setup, and ExitBootServices are scaffolded with explicit error logs and remain to be wired fully in subsequent prompts.
+
+Memory hardening scaffolding is now present in `crates/memory`:
+- frame allocator seeded by descriptor map + reserved ranges
+- heap initialization API for kernel allocator setup
+- paging API with alignment and duplicate-map invariants

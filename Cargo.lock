@@ -56,12 +56,17 @@ dependencies = [
  "sadas-boot-protocol",
  "sadas-console",
  "sadas-logging",
+ "sadas-memory",
  "sadas-platform",
  "sadas-sysapi",
 ]
 
 [[package]]
 name = "sadas-logging"
+version = "0.1.0"
+
+[[package]]
+name = "sadas-memory"
 version = "0.1.0"
 
 [[package]]
