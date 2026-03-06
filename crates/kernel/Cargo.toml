@@ -11,3 +11,5 @@ sadas-boot-protocol = { path = "../boot-protocol" }
 sadas-console = { path = "../console" }
 sadas-memory = { path = "../memory" }
 sadas-arch-x86_64 = { path = "../arch-x86_64" }
+sadas-syscall = { path = "../syscall" }
+sadas-exec = { path = "../exec" }

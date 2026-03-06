@@ -6,6 +6,8 @@ members = [
   "crates/console",
   "crates/arch-x86_64",
   "crates/memory",
+  "crates/syscall",
+  "crates/exec",
   "crates/sysapi",
   "crates/boot",
   "crates/bootloader-uefi",
@@ -21,6 +23,9 @@ members = [
   "services/privacy-firewall",
   "apps/sadas-store",
   "apps/sadas-settings",
+  "userland/lib",
+  "userland/init",
+  "userland/shell",
   "tools/sadasctl",
   "tools/qemu-runner"
 ]

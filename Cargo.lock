@@ -37,6 +37,10 @@ name = "sadas-drivers"
 version = "0.1.0"
 
 [[package]]
+name = "sadas-exec"
+version = "0.1.0"
+
+[[package]]
 name = "sadas-init"
 version = "0.1.0"
 dependencies = [
@@ -60,10 +64,12 @@ dependencies = [
  "sadas-arch-x86_64",
  "sadas-boot-protocol",
  "sadas-console",
+ "sadas-exec",
  "sadas-logging",
  "sadas-memory",
  "sadas-platform",
  "sadas-sysapi",
+ "sadas-syscall",
 ]
 
 [[package]]
@@ -125,10 +131,36 @@ name = "sadas-sysapi"
 version = "0.1.0"
 
 [[package]]
+name = "sadas-syscall"
+version = "0.1.0"
+
+[[package]]
 name = "sadas-ui"
 version = "0.1.0"
 dependencies = [
  "sadas-sysapi",
+]
+
+[[package]]
+name = "sadas-user-init"
+version = "0.1.0"
+dependencies = [
+ "sadas-syscall",
+ "sadas-userland",
+]
+
+[[package]]
+name = "sadas-user-shell"
+version = "0.1.0"
+dependencies = [
+ "sadas-userland",
+]
+
+[[package]]
+name = "sadas-userland"
+version = "0.1.0"
+dependencies = [
+ "sadas-syscall",
 ]
 
 [[package]]

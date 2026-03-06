@@ -52,3 +52,9 @@ Modern x86_64 interrupt baseline scaffolding is now present in `crates/arch-x86_
 - page-fault formatter/handler integration
 - MADT parser enough for LAPIC/IOAPIC addresses
 - APIC timer bootstrap state
+
+Minimal userspace scaffolding is now present:
+- `crates/syscall` ABI for core process/file/console syscalls
+- `crates/exec` ELF64 parser
+- kernel boot path models `/bin/init` load from initfs and process spawn
+- `userland/shell` provides required builtins (`help/ls/cat/echo/reboot/shutdown/ps`)

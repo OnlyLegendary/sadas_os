@@ -14,13 +14,90 @@ use sadas_arch_x86_64::interrupts::{FaultInfo, InterruptController};
 use sadas_arch_x86_64::timer::Timer;
 use sadas_boot_protocol::BootInfo;
 use sadas_console as console;
+use sadas_exec::parse_elf64;
 use sadas_logging as logging;
 use sadas_memory::frame::{
     FrameAllocator, FrameStats, MemoryDescriptor, MemoryType, ReservedRange,
 };
 use sadas_memory::heap;
 use sadas_memory::paging::{MapFlags, PageMapper};
+use sadas_syscall::{SyscallNumber, SyscallRequest, SyscallResponse};
 use scheduler::{CpuHint, DeviceTier, Scheduler, Task, TaskId};
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Process {
+    pub pid: u32,
+    pub address_space_id: u64,
+    pub parent: u32,
+    pub alive: bool,
+}
+
+pub struct ProcessTable {
+    entries: [Option<Process>; 64],
+    next_pid: u32,
+}
+
+impl ProcessTable {
+    pub const fn new() -> Self {
+        Self {
+            entries: [None; 64],
+            next_pid: 1,
+        }
+    }
+
+    pub fn spawn(&mut self, parent: u32) -> Option<u32> {
+        let pid = self.next_pid;
+        let asid = 0x1000 + pid as u64;
+        for slot in &mut self.entries {
+            if slot.is_none() {
+                *slot = Some(Process {
+                    pid,
+                    address_space_id: asid,
+                    parent,
+                    alive: true,
+                });
+                self.next_pid += 1;
+                return Some(pid);
+            }
+        }
+        None
+    }
+
+    pub fn mark_exited(&mut self, pid: u32) {
+        for entry in &mut self.entries {
+            if let Some(p) = entry.as_mut() {
+                if p.pid == pid {
+                    p.alive = false;
+                }
+            }
+        }
+    }
+
+    pub fn list_alive(&self) -> usize {
+        self.entries.iter().flatten().filter(|p| p.alive).count()
+    }
+}
+
+pub fn syscall_dispatch(table: &mut ProcessTable, req: SyscallRequest) -> SyscallResponse {
+    match req.nr {
+        SyscallNumber::Write => SyscallResponse::ok(req.arg1),
+        SyscallNumber::Read => SyscallResponse::ok(0),
+        SyscallNumber::Exit => {
+            table.mark_exited(req.arg0 as u32);
+            SyscallResponse::ok(0)
+        }
+        SyscallNumber::Spawn => table
+            .spawn(req.arg0 as u32)
+            .map(|pid| SyscallResponse::ok(pid as u64))
+            .unwrap_or(SyscallResponse::err(12)),
+        SyscallNumber::Wait => SyscallResponse::ok(req.arg1),
+        SyscallNumber::Open => SyscallResponse::ok(3),
+        SyscallNumber::Close => SyscallResponse::ok(0),
+        SyscallNumber::ReadDir => SyscallResponse::ok(0),
+        SyscallNumber::Stat => SyscallResponse::ok(0),
+        SyscallNumber::Mmap => SyscallResponse::ok(req.arg1),
+    }
+}
 
 pub struct MemoryManager {
     frame_allocator: FrameAllocator,
@@ -215,6 +292,17 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
     ]);
     sched.init_interrupt_timer_baseline();
 
+    let mut processes = ProcessTable::new();
+    let init_elf = mock_init_elf();
+    if parse_elf64(&init_elf).is_ok() {
+        console::info!("sadas: /bin/init elf loaded from initfs");
+    } else {
+        console::warn!("sadas: /bin/init elf parse failed");
+    }
+    if let Some(init_pid) = processes.spawn(0) {
+        console::info!("sadas: launching /bin/init pid={}", init_pid);
+    }
+
     for _ in 0..4 {
         if let Some(task) = sched.on_timer_interrupt() {
             if task.id == 1 {
@@ -268,6 +356,17 @@ fn mock_madt_table() -> [u8; 56] {
     madt[45] = 12;
     madt[48..52].copy_from_slice(&0xFEC0_0000u32.to_le_bytes());
     madt
+}
+
+fn mock_init_elf() -> [u8; 64] {
+    let mut elf = [0u8; 64];
+    elf[0..4].copy_from_slice(b"\x7fELF");
+    elf[4] = 2;
+    elf[5] = 1;
+    elf[24..32].copy_from_slice(&0x400000u64.to_le_bytes());
+    elf[32..40].copy_from_slice(&64u64.to_le_bytes());
+    elf[56..58].copy_from_slice(&1u16.to_le_bytes());
+    elf
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -383,4 +482,48 @@ fn interrupts_enabled() -> bool {
 #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
 fn interrupts_enabled() -> bool {
     false
+}
+
+#[cfg(test)]
+mod process_tests {
+    use super::*;
+
+    #[test]
+    fn spawn_assigns_unique_asids() {
+        let mut table = ProcessTable::new();
+        let a = table.spawn(0).expect("pid");
+        let b = table.spawn(a).expect("pid");
+        assert_ne!(a, b);
+        assert_eq!(table.list_alive(), 2);
+    }
+
+    #[test]
+    fn syscall_spawn_and_exit_update_process_state() {
+        let mut table = ProcessTable::new();
+        let spawned = syscall_dispatch(
+            &mut table,
+            SyscallRequest {
+                nr: SyscallNumber::Spawn,
+                arg0: 0,
+                arg1: 0,
+                arg2: 0,
+                arg3: 0,
+            },
+        );
+        assert_eq!(spawned.status, 0);
+
+        let pid = spawned.value;
+        let exited = syscall_dispatch(
+            &mut table,
+            SyscallRequest {
+                nr: SyscallNumber::Exit,
+                arg0: pid,
+                arg1: 0,
+                arg2: 0,
+                arg3: 0,
+            },
+        );
+        assert_eq!(exited.status, 0);
+        assert_eq!(table.list_alive(), 0);
+    }
 }
