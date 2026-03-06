@@ -9,34 +9,55 @@ Sadas OS is a from-scratch Rust operating system project designed to become a co
 - **Customization** with sleek UI themes, frosted glass mode, and obsidian glass mode.
 - **Runs well on old and new hardware** using runtime tiers, latency-aware scheduling, and frame-budget-aware UX profiles.
 
-## Current operational stack
+## Current baseline (what exists in this repo today)
 
-- `crates/boot`: hardened boot chain model (secure/measured boot and fallback slot).
+- x86_64 boot flow targeting **UEFI-first** development.
+- Rust UEFI bootloader crate (`sadas-bootloader-uefi`) that produces `BOOTX64.EFI`.
+- Shared `BootInfo` handoff contract (memory map / framebuffer / ACPI RSDP / initfs / cmdline fields).
+- QEMU runner with both legacy and UEFI modes.
+- Unified console layer (`sadas-console`) with serial COM1 and framebuffer text rendering.
+- Memory scaffolding (`sadas-memory`) for frame allocation, heap init, and page mapping APIs.
+- x86_64 arch baseline crate (`sadas-arch-x86_64`) for IDT/exceptions, MADT parsing, APIC, and timer setup.
+- Minimal userspace scaffolding (`sadas-syscall`, `sadas-exec`, `userland/*`) for process isolation and shell bring-up.
+
+## Current operational stack (higher-level crate map)
+
+- `crates/boot`: boot chain model and artifact layout.
 - `crates/vm`: VM profile and canonical user/kernel address layout definitions.
-- `crates/drivers`: broad driver matrix (storage, network, input, media, graphics, sensors, power, printer).
-- `crates/installer`: secure installer profile and stage pipeline.
-- `crates/kernel`: microkernel core, priority scheduler, latency hints, capability audit log, secure IPC checks.
-- `crates/platform`: low-level primitives such as entropy.
-- `crates/sysapi`: syscall ABI and shared product enums for privacy/theme/window control.
-- `crates/services`: policy model for vault, broker, compositor, shell, updater, compatibility layer.
-- `crates/ui`: UI profile tuning, frosted/obsidian glass palettes, and desktop layout helpers.
-- `crates/init`: startup orchestration for boot, VM, installer, runtime budgets, UI, services, and driver matrix.
-- `tools/sadasctl`: planning tool with boot/VM/driver/installer inspection commands.
+- `crates/drivers`: driver matrix (storage, network, input, graphics, etc.) — WIP.
+- `crates/installer`: installer pipeline — WIP.
+- `crates/kernel`: kernel core, scheduling, and syscall dispatch — WIP.
+- `crates/platform`: low-level primitives.
+- `crates/sysapi`: syscall ABI and shared enums.
+- `crates/services`: policy model and service interfaces — WIP.
+- `crates/ui`: UI profile tuning — WIP.
+- `crates/init`: startup orchestration — WIP.
+- `tools/sadasctl`: inspection/utility tool.
 
-## Quick checks
+## Console layer
+
+- Serial console initializes COM1 (`0x3F8`) early and is always available.
+- Framebuffer console uses GOP-provided framebuffer metadata from `BootInfo` when present.
+- Logs flow through unified backend to serial + framebuffer with simple rate limiting.
+- Kernel panic path prints panic context and halts CPU.
+
+## Memory layer
+
+- `sadas-memory::frame`: frame allocator seeded from UEFI-style descriptors and reserved ranges.
+- `sadas-memory::heap`: lock-based global heap initializer for kernel allocations.
+- `sadas-memory::paging`: page-alignment-checked mapping API for identity and explicit mappings.
+
+## Minimal userspace and process model
+
+- Syscall ABI crate: `crates/syscall` (numbers and stubs; expanding over time).
+- ELF loader crate: `crates/exec` with minimal ELF64 header parsing (WIP).
+- Userspace packages:
+  - `userland/init` (`/bin/init` model)
+  - `userland/shell` with builtins: `help ls cat echo reboot shutdown ps`
+  - `userland/ping` and `userland/httpget` (network plumbing WIP)
+
+## Boot in QEMU (UEFI)
 
 ```bash
-cargo fmt --all
-cargo check --workspace
-cargo test --workspace
-cargo run -p sadas-init
-cargo run -p sadasctl -- feature-matrix
-cargo run -p sadasctl -- demo-shell
-```
-
-## What is still needed for a true shipping OS
-
-1. Real bootloader executable and firmware integration.
-2. Working page tables, process isolation, and memory reclaim.
-3. Real hardware drivers and userspace daemon interfaces.
-4. GUI installer frontend, recovery image, and signed OTA pipeline.
+./scripts/build.sh
+./scripts/run-qemu.sh

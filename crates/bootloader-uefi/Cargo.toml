@@ -1,0 +1,11 @@
+[package]
+name = "sadas-bootloader-uefi"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+sadas-boot-protocol = { path = "../boot-protocol" }
+
+[[bin]]
+name = "sadas-bootloader-uefi"
+path = "src/main.rs"

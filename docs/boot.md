@@ -1,0 +1,60 @@
+# Sadas Boot (UEFI-first)
+
+## Components
+
+- `crates/bootloader-uefi`: UEFI application entry (`efi_main`) and boot-path diagnostics.
+- `crates/boot-protocol`: stable `BootInfo` ABI shared with kernel.
+- `tools/qemu-runner`: builds ESP layout and runs QEMU with OVMF.
+
+## BootInfo contract
+
+`BootInfo` contains:
+- memory map pointer/count/entry size/version
+- framebuffer address/size/stride/format + width/height
+- ACPI RSDP pointer
+- initfs address/size
+- cmdline address/length
+
+## Build UEFI artifacts
+
+```bash
+cargo run -p sadas-qemu-runner -- --uefi --build-only
+```
+
+Produces `target/esp/` with:
+- `EFI/BOOT/BOOTX64.EFI`
+- `kernel.elf`
+- `initfs.cpio`
+- `cmdline.txt`
+
+## Run in QEMU + OVMF
+
+```bash
+cargo run -p sadas-qemu-runner -- --uefi --run
+```
+
+The runner uses:
+- `QEMU_SYSTEM_X86_64` if set (else PATH + Windows fallbacks)
+- `OVMF_CODE`/`OVMF_VARS` env vars if set (else common Linux paths)
+
+## Current status
+
+This prompt adds the UEFI crate, ESP layout, and QEMU UEFI wiring.
+Kernel ELF loading, memory map handoff, GOP setup, and ExitBootServices are scaffolded with explicit error logs and remain to be wired fully in subsequent prompts.
+
+Memory hardening scaffolding is now present in `crates/memory`:
+- frame allocator seeded by descriptor map + reserved ranges
+- heap initialization API for kernel allocator setup
+- paging API with alignment and duplicate-map invariants
+
+Modern x86_64 interrupt baseline scaffolding is now present in `crates/arch-x86_64`:
+- IDT + exception setup model
+- page-fault formatter/handler integration
+- MADT parser enough for LAPIC/IOAPIC addresses
+- APIC timer bootstrap state
+
+Minimal userspace scaffolding is now present:
+- `crates/syscall` ABI for core process/file/console syscalls
+- `crates/exec` ELF64 parser
+- kernel boot path models `/bin/init` load from initfs and process spawn
+- `userland/shell` provides required builtins (`help/ls/cat/echo/reboot/shutdown/ps`)
