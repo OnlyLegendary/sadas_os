@@ -8,6 +8,7 @@ members = [
   "crates/memory",
   "crates/block",
   "crates/fs",
+  "crates/net",
   "crates/syscall",
   "crates/exec",
   "crates/sysapi",
@@ -28,6 +29,8 @@ members = [
   "userland/lib",
   "userland/init",
   "userland/shell",
+  "userland/ping",
+  "userland/httpget",
   "tools/sadasctl",
   "tools/qemu-runner"
 ]

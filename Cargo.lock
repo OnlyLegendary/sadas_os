@@ -92,6 +92,10 @@ name = "sadas-memory"
 version = "0.1.0"
 
 [[package]]
+name = "sadas-net"
+version = "0.1.0"
+
+[[package]]
 name = "sadas-permission-broker"
 version = "0.1.0"
 dependencies = [
@@ -153,11 +157,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sadas-user-httpget"
+version = "0.1.0"
+dependencies = [
+ "sadas-net",
+]
+
+[[package]]
 name = "sadas-user-init"
 version = "0.1.0"
 dependencies = [
  "sadas-syscall",
  "sadas-userland",
+]
+
+[[package]]
+name = "sadas-user-ping"
+version = "0.1.0"
+dependencies = [
+ "sadas-net",
 ]
 
 [[package]]

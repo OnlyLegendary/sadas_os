@@ -75,6 +75,22 @@ To prepare a USB manually:
 - ESP is kept separate and can be mounted as `/efi` (optional) while root remains on the persistent image.
 - Shell builtins (`ls`, `cat`, `echo` via boot writes) read/write files persisted across reboot simulations by remounting the same image.
 
+
+## Networking baseline
+
+- `sadas-net` adds pragmatic device-first networking primitives with backends for `VirtioNet` (QEMU) and `E1000e` (real-hardware target).
+- Packet support in this phase includes Ethernet framing, ARP packet encoding, IPv4 packet encoding, ICMP echo generation (ping), DHCP lease stub flow, and minimal TCP HTTP GET helper.
+- New userland utilities:
+  - `sadas-user-ping` (`/bin/ping` model)
+  - `sadas-user-httpget` (`/bin/httpget` model)
+
+Examples:
+
+```bash
+cargo run -p sadas-user-ping
+cargo run -p sadas-user-httpget -- example.com /
+```
+
 ## Required checks
 
 ```bash
