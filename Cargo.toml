@@ -15,24 +15,29 @@ members = [
   "crates/boot",
   "crates/bootloader-uefi",
   "crates/boot-protocol",
+
   "crates/vm",
   "crates/drivers",
   "crates/installer",
   "crates/init",
   "crates/ui",
   "crates/services",
+
   "services/sadas-core",
   "services/permission-broker",
   "services/privacy-firewall",
+
   "apps/sadas-store",
   "apps/sadas-settings",
+
   "userland/lib",
   "userland/init",
   "userland/shell",
   "userland/ping",
   "userland/httpget",
+
   "tools/sadasctl",
-  "tools/qemu-runner"
+  "tools/qemu-runner",
 ]
 resolver = "2"
 

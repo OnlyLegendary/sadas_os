@@ -1,17 +1,38 @@
 # Sadas OS
 
-Sadas OS is a standalone Rust OS effort focused on privacy-first defaults and a Windows-friendly UX.
+Sadas OS is a from-scratch Rust operating system project designed to become a complete, polished desktop platform while staying privacy-first.
 
-## Current baseline
+## Product goals
 
-- x86_64 boot flow targeting UEFI-first development.
+- **Privacy by default** with capability controls, strict policy levels, and secure IPC channels.
+- **Familiarity** through a complete shell/compositor/service stack and predictable workflows.
+- **Customization** with sleek UI themes, frosted glass mode, and obsidian glass mode.
+- **Runs well on old and new hardware** using runtime tiers, latency-aware scheduling, and frame-budget-aware UX profiles.
+
+## Current baseline (what exists in this repo today)
+
+- x86_64 boot flow targeting **UEFI-first** development.
 - Rust UEFI bootloader crate (`sadas-bootloader-uefi`) that produces `BOOTX64.EFI`.
 - Shared `BootInfo` handoff contract (memory map / framebuffer / ACPI RSDP / initfs / cmdline fields).
 - QEMU runner with both legacy and UEFI modes.
 - Unified console layer (`sadas-console`) with serial COM1 and framebuffer text rendering.
-- Hardened memory scaffolding (`sadas-memory`) for frame allocation, heap init, and page mapping APIs.
+- Memory scaffolding (`sadas-memory`) for frame allocation, heap init, and page mapping APIs.
 - x86_64 arch baseline crate (`sadas-arch-x86_64`) for IDT/exceptions, MADT parsing, APIC, and timer setup.
 - Minimal userspace scaffolding (`sadas-syscall`, `sadas-exec`, `userland/*`) for process isolation and shell bring-up.
+
+## Current operational stack (higher-level crate map)
+
+- `crates/boot`: boot chain model and artifact layout.
+- `crates/vm`: VM profile and canonical user/kernel address layout definitions.
+- `crates/drivers`: driver matrix (storage, network, input, graphics, etc.) — WIP.
+- `crates/installer`: installer pipeline — WIP.
+- `crates/kernel`: kernel core, scheduling, and syscall dispatch — WIP.
+- `crates/platform`: low-level primitives.
+- `crates/sysapi`: syscall ABI and shared enums.
+- `crates/services`: policy model and service interfaces — WIP.
+- `crates/ui`: UI profile tuning — WIP.
+- `crates/init`: startup orchestration — WIP.
+- `tools/sadasctl`: inspection/utility tool.
 
 ## Console layer
 
@@ -25,76 +46,18 @@ Sadas OS is a standalone Rust OS effort focused on privacy-first defaults and a 
 - `sadas-memory::frame`: frame allocator seeded from UEFI-style descriptors and reserved ranges.
 - `sadas-memory::heap`: lock-based global heap initializer for kernel allocations.
 - `sadas-memory::paging`: page-alignment-checked mapping API for identity and explicit mappings.
-- Kernel now emits debug memory stats during early boot (`tracked/free/allocated`).
 
 ## Minimal userspace and process model
 
-- Syscall ABI crate: `crates/syscall` with `write/read/exit/spawn/wait/open/close/readdir/stat/mmap` numbers.
-- ELF loader crate: `crates/exec` with minimal ELF64 header parsing.
+- Syscall ABI crate: `crates/syscall` (numbers and stubs; expanding over time).
+- ELF loader crate: `crates/exec` with minimal ELF64 header parsing (WIP).
 - Userspace packages:
   - `userland/init` (`/bin/init` model)
   - `userland/shell` with builtins: `help ls cat echo reboot shutdown ps`
-- Kernel process table tracks PID + isolated address-space IDs and dispatches core syscall stubs.
+  - `userland/ping` and `userland/httpget` (network plumbing WIP)
 
 ## Boot in QEMU (UEFI)
 
 ```bash
 ./scripts/build.sh
 ./scripts/run-qemu.sh
-```
-
-Direct runner commands:
-
-```bash
-cargo run -p sadas-qemu-runner -- --uefi --build-only
-cargo run -p sadas-qemu-runner -- --uefi --run
-```
-
-Notes:
-- UEFI QEMU flow requires OVMF (`OVMF_CODE.fd` and `OVMF_VARS.fd`).
-- UEFI bootloader compilation requires Rust target `x86_64-unknown-uefi`.
-
-## Make USB
-
-After `./scripts/build.sh`, `target/esp/` contains the ESP layout:
-- `EFI/BOOT/BOOTX64.EFI`
-- `kernel.elf`
-- `initfs.cpio`
-- `cmdline.txt`
-
-To prepare a USB manually:
-1. Partition USB with a FAT32 ESP.
-2. Mount it and copy all files from `target/esp/` to the FAT32 root.
-3. Ensure `EFI/BOOT/BOOTX64.EFI` exists on the USB.
-
-
-## Persistent storage path
-
-- `sadas-block` provides a block layer with backends modeled as `VirtioBlk` (QEMU) and `Ahci` (real-hardware path target).
-- `sadas-fs` provides a simple reliable root filesystem image mounted as `/` at `system/state/rootfs.img` in the current host-model runtime.
-- ESP is kept separate and can be mounted as `/efi` (optional) while root remains on the persistent image.
-- Shell builtins (`ls`, `cat`, `echo` via boot writes) read/write files persisted across reboot simulations by remounting the same image.
-
-
-## Networking baseline
-
-- `sadas-net` adds pragmatic device-first networking primitives with backends for `VirtioNet` (QEMU) and `E1000e` (real-hardware target).
-- Packet support in this phase includes Ethernet framing, ARP packet encoding, IPv4 packet encoding, ICMP echo generation (ping), DHCP lease stub flow, and minimal TCP HTTP GET helper.
-- New userland utilities:
-  - `sadas-user-ping` (`/bin/ping` model)
-  - `sadas-user-httpget` (`/bin/httpget` model)
-
-Examples:
-
-```bash
-cargo run -p sadas-user-ping
-cargo run -p sadas-user-httpget -- example.com /
-```
-
-## Required checks
-
-```bash
-cargo fmt --all
-cargo check --workspace
-cargo test --workspace
-```

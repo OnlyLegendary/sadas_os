@@ -1,5 +1,8 @@
 #![no_std]
 
+#[cfg(test)]
+extern crate std;
+
 pub mod capability;
 pub mod ipc;
 pub mod phase1;
@@ -7,6 +10,9 @@ pub mod scheduler;
 
 use capability::{Capability, CapabilitySpace};
 use ipc::Message;
+use scheduler::{CpuHint, DeviceTier, Scheduler, Task, TaskId};
+
+// --- Codex phase1 + boot bring-up imports ---
 use phase1::{KernelTask, PreemptiveScheduler};
 use sadas_arch_x86_64::acpi;
 use sadas_arch_x86_64::apic::ApicController;
@@ -16,13 +22,10 @@ use sadas_boot_protocol::BootInfo;
 use sadas_console as console;
 use sadas_exec::parse_elf64;
 use sadas_logging as logging;
-use sadas_memory::frame::{
-    FrameAllocator, FrameStats, MemoryDescriptor, MemoryType, ReservedRange,
-};
+use sadas_memory::frame::{FrameAllocator, FrameStats, MemoryDescriptor, MemoryType, ReservedRange};
 use sadas_memory::heap;
 use sadas_memory::paging::{MapFlags, PageMapper};
 use sadas_syscall::{SyscallNumber, SyscallRequest, SyscallResponse};
-use scheduler::{CpuHint, DeviceTier, Scheduler, Task, TaskId};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Process {
@@ -142,6 +145,7 @@ impl MemoryManager {
     }
 }
 
+// --- Main kernel API preserved (used by init/services scaffolding) ---
 pub struct Kernel {
     scheduler: Scheduler,
     caps: CapabilitySpace,
@@ -211,6 +215,7 @@ impl Kernel {
     }
 }
 
+// --- Codex boot entrypoints and diagnostics ---
 pub const KMAIN_BOOT_ARG_NONE: u64 = 0;
 pub const KMAIN_MESSAGE: &str = "sadas: hello from kernel";
 pub const PHASE1_BOOT_LINES: [&str; 8] = [
@@ -281,14 +286,8 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
     console::info!("sadas: apic timer started");
 
     let mut sched = PreemptiveScheduler::new([
-        KernelTask {
-            id: 1,
-            name: "idle",
-        },
-        KernelTask {
-            id: 2,
-            name: "worker",
-        },
+        KernelTask { id: 1, name: "idle" },
+        KernelTask { id: 2, name: "worker" },
     ]);
     sched.init_interrupt_timer_baseline();
 
