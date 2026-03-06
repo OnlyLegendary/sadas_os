@@ -2,12 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE="$ROOT_DIR/target/sadas_boot.img"
 
-if [[ ! -f "$IMAGE" ]]; then
-  echo "Boot image not found. Run ./scripts/build.sh first."
-  exit 1
+echo "==> Launching Sadas UEFI boot in QEMU"
+if ! cargo run -p sadas-qemu-runner -- --uefi --run; then
+  echo "==> UEFI run failed; falling back to legacy boot"
+  cargo run -p sadas-qemu-runner -- --legacy --run
 fi
-
-echo "==> Launching Sadas boot image in QEMU"
-cargo run -p sadas-qemu-runner -- --run

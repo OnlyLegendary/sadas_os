@@ -1,10 +1,10 @@
 # Build and Run
 
-Use the repo scripts from root:
+Use the UEFI-first workflow from repo root:
 
 ```bash
 ./scripts/build.sh
 ./scripts/run-qemu.sh
 ```
 
-For boot internals and troubleshooting, see `docs/boot.md`.
+See `docs/boot.md` for BootInfo details and troubleshooting.

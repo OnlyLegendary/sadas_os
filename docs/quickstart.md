@@ -1,4 +1,4 @@
-# Sadas OS Quickstart
+# Sadas OS Quickstart (UEFI)
 
 ## Build
 
@@ -6,18 +6,15 @@
 ./scripts/build.sh
 ```
 
-This compiles the workspace, generates `target/sadas_boot.img`, and seeds state defaults.
-
-## Run
+## Run in QEMU (UEFI)
 
 ```bash
 ./scripts/run-qemu.sh
 ```
 
-This launches QEMU via `sadas-qemu-runner`.
+## Alternative runner modes
 
-## Phase goal checks
-
-- Boot image generated.
-- QEMU invocation works when QEMU is installed.
-- Kernel boot logs are emitted.
+```bash
+cargo run -p sadas-qemu-runner -- --legacy --run
+cargo run -p sadas-qemu-runner -- --uefi --run
+```

@@ -8,6 +8,7 @@ pub mod scheduler;
 use capability::{Capability, CapabilitySpace};
 use ipc::Message;
 use phase1::{KernelTask, PreemptiveScheduler};
+use sadas_boot_protocol::BootInfo;
 use sadas_logging as logging;
 use scheduler::{CpuHint, DeviceTier, Scheduler, Task, TaskId};
 
@@ -143,6 +144,20 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
             }
         }
     }
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[no_mangle]
+pub extern "C" fn kmain_boot_info(boot_info_ptr: *const BootInfo) -> ! {
+    if boot_info_ptr.is_null() {
+        kmain(KMAIN_BOOT_ARG_NONE);
+    }
+
+    let boot_info = unsafe { &*boot_info_ptr };
+    let _ = boot_info;
+
+    // Phase 1: use stable handoff ABI and fall back to core loop.
+    kmain(KMAIN_BOOT_ARG_NONE)
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

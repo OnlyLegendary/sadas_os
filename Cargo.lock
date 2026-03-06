@@ -7,6 +7,17 @@ name = "sadas-boot"
 version = "0.1.0"
 
 [[package]]
+name = "sadas-boot-protocol"
+version = "0.1.0"
+
+[[package]]
+name = "sadas-bootloader-uefi"
+version = "0.1.0"
+dependencies = [
+ "sadas-boot-protocol",
+]
+
+[[package]]
 name = "sadas-core"
 version = "0.1.0"
 
@@ -35,6 +46,7 @@ version = "0.1.0"
 name = "sadas-kernel"
 version = "0.1.0"
 dependencies = [
+ "sadas-boot-protocol",
  "sadas-logging",
  "sadas-platform",
  "sadas-sysapi",

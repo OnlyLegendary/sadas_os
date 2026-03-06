@@ -1,50 +1,43 @@
-# Booting Sadas OS (Prompt 1 baseline)
+# Sadas Boot (UEFI-first)
 
-This phase provides a standalone x86_64 boot artifact and runner flow.
+## Components
 
-## What gets built
+- `crates/bootloader-uefi`: UEFI application entry (`efi_main`) and boot-path diagnostics.
+- `crates/boot-protocol`: stable `BootInfo` ABI shared with kernel.
+- `tools/qemu-runner`: builds ESP layout and runs QEMU with OVMF.
 
-- `target/sadas_boot.img` (raw boot sector image)
-- kernel boot log transcript emitted over text output in QEMU
+## BootInfo contract
 
-## Build
+`BootInfo` contains:
+- memory map pointer/count/entry size/version
+- framebuffer address/size/stride/format + width/height
+- ACPI RSDP pointer
+- initfs address/size
+- cmdline address/length
 
-```bash
-./scripts/build.sh
-```
-
-Equivalent direct command:
-
-```bash
-cargo run -p sadas-qemu-runner -- --build-only
-```
-
-## Run in QEMU
+## Build UEFI artifacts
 
 ```bash
-./scripts/run-qemu.sh
+cargo run -p sadas-qemu-runner -- --uefi --build-only
 ```
 
-Equivalent direct command:
+Produces `target/esp/` with:
+- `EFI/BOOT/BOOTX64.EFI`
+- `kernel.elf`
+- `initfs.cpio`
+- `cmdline.txt`
+
+## Run in QEMU + OVMF
 
 ```bash
-cargo run -p sadas-qemu-runner -- --run
+cargo run -p sadas-qemu-runner -- --uefi --run
 ```
 
-Expected serial output includes:
-- `[sadas][INFO] sadas: hello from kernel`
-- scheduler tick logs
-- `phase1 scheduler loop entered`
+The runner uses:
+- `QEMU_SYSTEM_X86_64` if set (else PATH + Windows fallbacks)
+- `OVMF_CODE`/`OVMF_VARS` env vars if set (else common Linux paths)
 
-## Real hardware status
+## Current status
 
-Real hardware UEFI boot is **not complete yet** in this baseline. The next prompts add:
-- UEFI loader artifact (`BOOTX64.EFI`)
-- USB image generation
-- installer path for ESP + kernel/initfs
-
-## Troubleshooting
-
-- `QEMU not found...`
-  - Install QEMU and ensure `qemu-system-x86_64` is on PATH.
-  - Or set `QEMU_SYSTEM_X86_64=/full/path/to/qemu-system-x86_64(.exe)`.
+This prompt adds the UEFI crate, ESP layout, and QEMU UEFI wiring.
+Kernel ELF loading, memory map handoff, GOP setup, and ExitBootServices are scaffolded with explicit error logs and remain to be wired fully in subsequent prompts.

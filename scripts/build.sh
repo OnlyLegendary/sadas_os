@@ -9,8 +9,11 @@ mkdir -p "$STATE_DIR"
 echo "==> Building Rust workspace"
 cargo build --workspace
 
-echo "==> Building Sadas boot image"
-cargo run -p sadas-qemu-runner -- --build-only
+echo "==> Building Sadas UEFI ESP layout"
+if ! cargo run -p sadas-qemu-runner -- --uefi --build-only; then
+  echo "==> UEFI build prerequisites missing; falling back to legacy boot image"
+  cargo run -p sadas-qemu-runner -- --legacy --build-only
+fi
 
 echo "==> Seeding state defaults"
 cat > "$STATE_DIR/permissions.db" <<'PERMS'
@@ -29,4 +32,4 @@ slot=A
 rollback_available=false
 UPDATES
 
-echo "Build complete. Boot image: $ROOT_DIR/target/sadas_boot.img"
+echo "Build complete. Prefer UEFI ESP at $ROOT_DIR/target/esp; legacy image at $ROOT_DIR/target/sadas_boot.img"
