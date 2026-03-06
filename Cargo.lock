@@ -18,6 +18,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "sadas-console"
+version = "0.1.0"
+dependencies = [
+ "sadas-boot-protocol",
+]
+
+[[package]]
 name = "sadas-core"
 version = "0.1.0"
 
@@ -47,6 +54,7 @@ name = "sadas-kernel"
 version = "0.1.0"
 dependencies = [
  "sadas-boot-protocol",
+ "sadas-console",
  "sadas-logging",
  "sadas-platform",
  "sadas-sysapi",

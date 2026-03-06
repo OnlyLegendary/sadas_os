@@ -8,6 +8,14 @@ Sadas OS is a standalone Rust OS effort focused on privacy-first defaults and a 
 - Rust UEFI bootloader crate (`sadas-bootloader-uefi`) that produces `BOOTX64.EFI`.
 - Shared `BootInfo` handoff contract (memory map / framebuffer / ACPI RSDP / initfs / cmdline fields).
 - QEMU runner with both legacy and UEFI modes.
+- Unified console layer (`sadas-console`) with serial COM1 and framebuffer text rendering.
+
+## Console layer
+
+- Serial console initializes COM1 (`0x3F8`) early and is always available.
+- Framebuffer console uses GOP-provided framebuffer metadata from `BootInfo` when present.
+- Logs flow through unified backend to serial + framebuffer with simple rate limiting.
+- Kernel panic path prints panic context and halts CPU.
 
 ## Boot in QEMU (UEFI)
 

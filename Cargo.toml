@@ -3,6 +3,7 @@ members = [
   "crates/kernel",
   "crates/platform",
   "crates/logging",
+  "crates/console",
   "crates/sysapi",
   "crates/boot",
   "crates/bootloader-uefi",

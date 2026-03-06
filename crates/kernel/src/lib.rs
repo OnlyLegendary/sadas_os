@@ -9,6 +9,7 @@ use capability::{Capability, CapabilitySpace};
 use ipc::Message;
 use phase1::{KernelTask, PreemptiveScheduler};
 use sadas_boot_protocol::BootInfo;
+use sadas_console as console;
 use sadas_logging as logging;
 use scheduler::{CpuHint, DeviceTier, Scheduler, Task, TaskId};
 
@@ -102,8 +103,9 @@ pub const PHASE1_BOOT_LINES: [&str; 7] = [
 #[no_mangle]
 pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
     let _ = boot_info_ptr;
-    logging::set_backend(logging::serial_com1_backend);
-    logging::info(KMAIN_MESSAGE);
+    console::init_serial();
+    logging::set_backend(console::logging_backend);
+    console::info!("{}", KMAIN_MESSAGE);
 
     let mut sched = PreemptiveScheduler::new([
         KernelTask {
@@ -116,7 +118,7 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
         },
     ]);
     sched.init_pic_and_timer();
-    logging::warn("sadas: pic/pit timer initialized");
+    console::warn!("sadas: pic/pit timer initialized");
 
     for _ in 0..4 {
         if let Some(task) = sched.on_timer_interrupt() {
@@ -129,7 +131,7 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
     }
 
     enable_interrupts();
-    logging::info("sadas: phase1 scheduler loop entered");
+    console::info!("sadas: phase1 scheduler loop entered");
     log_scheduler_diagnostics(&sched);
 
     loop {
@@ -138,7 +140,7 @@ pub extern "C" fn kmain(boot_info_ptr: u64) -> ! {
         if let Some(task) = sched.on_timer_interrupt() {
             let ticks = sched.tick_count();
             if ticks % 100 == 0 {
-                logging::info("sadas: scheduler heartbeat");
+                console::info!("sadas: scheduler heartbeat");
                 logging::debug(task.name);
                 log_scheduler_diagnostics(&sched);
             }
@@ -154,10 +156,36 @@ pub extern "C" fn kmain_boot_info(boot_info_ptr: *const BootInfo) -> ! {
     }
 
     let boot_info = unsafe { &*boot_info_ptr };
-    let _ = boot_info;
+    console::init_serial();
+    console::init_framebuffer(boot_info.framebuffer);
 
     // Phase 1: use stable handoff ABI and fall back to core loop.
     kmain(KMAIN_BOOT_ARG_NONE)
+}
+
+#[cfg(all(not(test), any(target_os = "none", target_os = "uefi")))]
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo<'_>) -> ! {
+    console::init_serial();
+    logging::set_backend(console::logging_backend);
+    console::error!("sadas: kernel panic");
+
+    if let Some(location) = info.location() {
+        console::error!(
+            "panic at {}:{}:{}",
+            location.file(),
+            location.line(),
+            location.column()
+        );
+    }
+    if let Some(message) = info.message().as_str() {
+        console::error!("message: {}", message);
+    }
+    console::error!("backtrace-ish: frame0=kmain frame1=interrupt_or_boot frame2=panic");
+
+    loop {
+        halt_cpu();
+    }
 }
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]

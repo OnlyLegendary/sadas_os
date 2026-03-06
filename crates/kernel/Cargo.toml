@@ -8,3 +8,4 @@ sadas-platform = { path = "../platform" }
 sadas-sysapi = { path = "../sysapi" }
 sadas-logging = { path = "../logging" }
 sadas-boot-protocol = { path = "../boot-protocol" }
+sadas-console = { path = "../console" }
