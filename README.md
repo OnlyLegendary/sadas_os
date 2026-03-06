@@ -1,33 +1,27 @@
 # Sadas OS
 
-Sadas OS is a privacy-first, no-bloat, Windows-friendly product OS effort.
+Sadas OS is a standalone Rust OS effort focused on privacy-first defaults and a Windows-friendly UX.
 
-Phase 1 uses a pragmatic base for a real desktop demo:
-- Linux kernel
-- Wayland + KDE Plasma
-- Flatpak app tooling
-- QEMU x86_64 UEFI as primary demo target
+Current implementation target (Prompt 1 baseline):
+- x86_64 boot path in QEMU
+- serial/text boot logs from kernel
+- no-std kernel + scheduler skeleton
+- deterministic build/run scripts
 
-## Repo layout
+## Repository layout
 
-- `system/` image artifacts, defaults, branding, persistent state
+- `crates/` kernel, boot, logging, sysapi and core runtime crates
+- `tools/qemu-runner/` boot image generator + QEMU launcher
 - `scripts/` build/run entrypoints
-- `docs/` quickstart + privacy + roadmap docs
-- `apps/` Rust UI apps (`sadas-store`, `sadas-settings`)
-- `services/` Rust services (`permission-broker`, `privacy-firewall`, `sadas-core`)
-- `crates/` kernel/platform/sysapi and lower-level Rust components
-- `tools/` developer tools
+- `system/` config/state defaults and install assets
+- `docs/` boot and roadmap documentation
 
-## Phase 1 quickstart
+## Quick start
 
 ```bash
 ./scripts/build.sh
 ./scripts/run-qemu.sh
 ```
-
-Detailed instructions:
-- `docs/quickstart.md`
-- `docs/privacy.md`
 
 ## Required checks
 
@@ -36,3 +30,9 @@ cargo fmt --all
 cargo check --workspace
 cargo test --workspace
 ```
+
+## Notes
+
+- `scripts/build.sh` now produces `target/sadas_boot.img` via `sadas-qemu-runner --build-only`.
+- `scripts/run-qemu.sh` launches the same artifact through `sadas-qemu-runner --run`.
+- If QEMU is not installed, the runner exits cleanly with guidance.

@@ -1,16 +1,10 @@
-# Build and Run (Phase 1)
+# Build and Run
 
-For current instructions, use `docs/quickstart.md`.
-
-## Commands
+Use the repo scripts from root:
 
 ```bash
 ./scripts/build.sh
 ./scripts/run-qemu.sh
 ```
 
-## Expected result
-
-- Bootable image artifact is created in `system/image/`.
-- QEMU boots to KDE desktop (primary path: UEFI + OVMF).
-- Settings and File Manager are available from desktop launcher/menu.
+For boot internals and troubleshooting, see `docs/boot.md`.

@@ -1,63 +1,50 @@
-# Booting Sadas OS in QEMU
+# Booting Sadas OS (Prompt 1 baseline)
 
-This repository includes a minimal bootable BIOS image that prints:
+This phase provides a standalone x86_64 boot artifact and runner flow.
 
-`sadas: hello from kernel`
+## What gets built
 
-## Prerequisites
+- `target/sadas_boot.img` (raw boot sector image)
+- kernel boot log transcript emitted over text output in QEMU
 
-- Rust toolchain (stable)
-- QEMU (`qemu-system-x86_64`) installed and available on `PATH`
-
-## One-command run
-
-From repo root:
+## Build
 
 ```bash
-make run
+./scripts/build.sh
 ```
 
-This command runs `cargo run -p sadas-qemu-runner`, which:
-1. Generates a 512-byte bootable BIOS image (`target/sadas_boot.img`).
-2. Boots it in QEMU.
-3. Prints `sadas: hello from kernel` from boot code.
+Equivalent direct command:
 
-## Platform notes
-
-### Linux
-- Install QEMU via your package manager (`qemu-system-x86` package name varies).
-- Run `make run`.
-
-### macOS
-- Install QEMU via Homebrew: `brew install qemu`.
-- Ensure `qemu-system-x86_64` is in PATH.
-- Run `make run`.
-
-### Windows
-- Install QEMU (official installer or package manager).
-- Ensure `qemu-system-x86_64.exe` is in PATH.
-- Run:
-  - `cargo run -p sadas-qemu-runner`
-  - or `make run` if GNU Make is installed.
-
-
-## Kernel entry handoff ABI
-
-The kernel entrypoint is defined in `crates/kernel` as:
-
-```rust
-#[no_mangle]
-extern "C" fn kmain(boot_info_ptr: u64) -> !
+```bash
+cargo run -p sadas-qemu-runner -- --build-only
 ```
 
+## Run in QEMU
 
-The generated boot image uses a tiny stage-0 loader that performs minimal setup and then jumps to a `kmain` routine in the boot sector. This keeps the handoff explicit while the Rust `kmain` symbol in `crates/kernel` is now defined with the same ABI for upcoming linkage work.
+```bash
+./scripts/run-qemu.sh
+```
 
-Current calling convention/arguments:
-- `boot_info_ptr` is reserved for future boot metadata.
-- The minimal boot path passes `0` (no metadata yet).
-- `kmain` is responsible for printing `sadas: hello from kernel`.
-- `kmain` currently emits three log lines through the logging layer: INFO, WARN, and ERROR.
+Equivalent direct command:
 
+```bash
+cargo run -p sadas-qemu-runner -- --run
+```
 
-For the full Phase 1 acceptance checklist and demo script, see `docs/phase1.md`.
+Expected serial output includes:
+- `[sadas][INFO] sadas: hello from kernel`
+- scheduler tick logs
+- `phase1 scheduler loop entered`
+
+## Real hardware status
+
+Real hardware UEFI boot is **not complete yet** in this baseline. The next prompts add:
+- UEFI loader artifact (`BOOTX64.EFI`)
+- USB image generation
+- installer path for ESP + kernel/initfs
+
+## Troubleshooting
+
+- `QEMU not found...`
+  - Install QEMU and ensure `qemu-system-x86_64` is on PATH.
+  - Or set `QEMU_SYSTEM_X86_64=/full/path/to/qemu-system-x86_64(.exe)`.

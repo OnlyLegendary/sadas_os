@@ -5,6 +5,17 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RunnerMode {
+    BuildOnly,
+    BuildAndRun,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RunnerConfig {
+    mode: RunnerMode,
+}
+
 fn main() {
     if let Err(err) = run_main() {
         eprintln!("{err}");
@@ -13,9 +24,16 @@ fn main() {
 }
 
 fn run_main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = parse_args(env::args().skip(1))?;
+
     let repo_root = find_repo_root()?;
     let image_path = repo_root.join("target/sadas_boot.img");
     write_boot_sector(&image_path)?;
+
+    if config.mode == RunnerMode::BuildOnly {
+        println!("Built boot image: {}", image_path.display());
+        return Ok(());
+    }
 
     let qemu_binary = resolve_qemu_binary()?;
 
@@ -28,6 +46,35 @@ fn run_main() -> Result<(), Box<dyn std::error::Error>> {
             .arg("-no-shutdown"),
         &format!("failed to launch {}", qemu_binary.display()),
     )
+}
+
+fn parse_args<I>(args: I) -> Result<RunnerConfig, Box<dyn std::error::Error>>
+where
+    I: IntoIterator<Item = String>,
+{
+    let mut mode = RunnerMode::BuildAndRun;
+
+    for arg in args {
+        match arg.as_str() {
+            "--build-only" => mode = RunnerMode::BuildOnly,
+            "--run" => mode = RunnerMode::BuildAndRun,
+            "-h" | "--help" => {
+                println!("Usage: cargo run -p sadas-qemu-runner -- [--build-only|--run]");
+                println!("  --build-only  generate target/sadas_boot.img without launching QEMU");
+                println!("  --run         generate image and run QEMU (default)");
+                return Ok(RunnerConfig { mode });
+            }
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("unknown argument: {arg}"),
+                )
+                .into())
+            }
+        }
+    }
+
+    Ok(RunnerConfig { mode })
 }
 
 fn find_repo_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -208,5 +255,17 @@ mod tests {
         ];
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn parse_args_supports_build_only() {
+        let cfg = parse_args(vec!["--build-only".to_string()]).expect("valid args");
+        assert_eq!(cfg.mode, RunnerMode::BuildOnly);
+    }
+
+    #[test]
+    fn parse_args_rejects_unknown_flags() {
+        let err = parse_args(vec!["--bad-flag".to_string()]).expect_err("must fail");
+        assert!(err.to_string().contains("unknown argument"));
     }
 }
