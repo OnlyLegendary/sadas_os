@@ -67,6 +67,14 @@ To prepare a USB manually:
 2. Mount it and copy all files from `target/esp/` to the FAT32 root.
 3. Ensure `EFI/BOOT/BOOTX64.EFI` exists on the USB.
 
+
+## Persistent storage path
+
+- `sadas-block` provides a block layer with backends modeled as `VirtioBlk` (QEMU) and `Ahci` (real-hardware path target).
+- `sadas-fs` provides a simple reliable root filesystem image mounted as `/` at `system/state/rootfs.img` in the current host-model runtime.
+- ESP is kept separate and can be mounted as `/efi` (optional) while root remains on the persistent image.
+- Shell builtins (`ls`, `cat`, `echo` via boot writes) read/write files persisted across reboot simulations by remounting the same image.
+
 ## Required checks
 
 ```bash

@@ -5,3 +5,4 @@ edition.workspace = true
 
 [dependencies]
 sadas-userland = { path = "../lib" }
+sadas-fs = { path = "../../crates/fs" }

@@ -6,6 +6,8 @@ members = [
   "crates/console",
   "crates/arch-x86_64",
   "crates/memory",
+  "crates/block",
+  "crates/fs",
   "crates/syscall",
   "crates/exec",
   "crates/sysapi",

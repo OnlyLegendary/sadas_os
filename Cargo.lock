@@ -7,6 +7,10 @@ name = "sadas-arch-x86_64"
 version = "0.1.0"
 
 [[package]]
+name = "sadas-block"
+version = "0.1.0"
+
+[[package]]
 name = "sadas-boot"
 version = "0.1.0"
 
@@ -39,6 +43,13 @@ version = "0.1.0"
 [[package]]
 name = "sadas-exec"
 version = "0.1.0"
+
+[[package]]
+name = "sadas-fs"
+version = "0.1.0"
+dependencies = [
+ "sadas-block",
+]
 
 [[package]]
 name = "sadas-init"
@@ -153,6 +164,7 @@ dependencies = [
 name = "sadas-user-shell"
 version = "0.1.0"
 dependencies = [
+ "sadas-fs",
  "sadas-userland",
 ]
 
